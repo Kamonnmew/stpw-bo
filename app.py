@@ -25,6 +25,7 @@ def search():
             topK = int(topK_str)
         else:
             return jsonify({"error": "Invalid topK parameter. It must be a valid integer."}), 400
+            
         files = request.files.getlist('files')  # Get list of files
         image_search_api = ImageSearchAPI(indexName=indexName, topK=topK)
         formatted_results_all = []
@@ -35,6 +36,11 @@ def search():
                 with ThreadPoolExecutor() as executor:
                     future = executor.submit(image_search_api.search_image_file, file)
                     results = future.result()
+
+                # Check if results is None (failed to get embeddings or search)
+                if results is None:
+                    formatted_results_all.append({"error": f"Failed to process file {file.filename}: No results returned"})
+                    continue
 
                 # Format search results for each file
                 formatted_results = []
@@ -48,7 +54,9 @@ def search():
                             "originalFile": filename,
                             "productType": product_type,
                             "productCode": product_code,
-                            "similarFile": result['imageUrl']
+                            "similarFile": result['imageUrl'],
+                            "confidence_score": result.get('confidence_score', 0),
+                            "similarity_percentage": result.get('similarity_percentage', 0)
                         }
                         formatted_results.append(formatted_result)
                     elif indexName == "product-carmodelclean":
@@ -58,7 +66,8 @@ def search():
                             "modelName": indexName,
                             "originalFile": filename,
                             "modelCars": model_cars,
-                            "similarFile": result['imageUrl']
+                            "similarFile": result['imageUrl'],
+                            "similarity_percentage": result.get('similarity_percentage', 0)
                         }
                         formatted_results.append(formatted_result)
                     elif indexName == "product-carmodel-type-code-used":
@@ -72,7 +81,8 @@ def search():
                             "modelCars": model_cars,
                             "productType": product_type,
                             "productCode": product_code,
-                            "similarFile": result['imageUrl']
+                            "similarFile": result['imageUrl'],
+                            "similarity_percentage": result.get('similarity_percentage', 0)
                         }
                         formatted_results.append(formatted_result)
 
