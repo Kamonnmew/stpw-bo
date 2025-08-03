@@ -42,6 +42,71 @@ def home():
     return "This is a SQL Search API", HTTP_200_OK
 
 
+@app.route('/test/blob', methods=['GET'])
+def test_blob_connection():
+    """Test blob connection without ImageSearchAPI"""
+    try:
+        import os
+        from azure.storage.blob import BlobServiceClient
+        
+        connection_string = os.getenv("BLOB_CONNECTION_STRING")
+        container_name = os.getenv("BLOB_CONTAINER_NAME")
+        
+        if not connection_string:
+            return {"error": "BLOB_CONNECTION_STRING not set"}, 400
+            
+        if "AccountName=" not in connection_string:
+            return {"error": "Connection string missing AccountName"}, 400
+            
+        if "AccountKey=" not in connection_string:
+            return {"error": "Connection string missing AccountKey"}, 400
+        
+        # Test connection
+        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+        container_client = blob_service_client.get_container_client(container_name)
+        
+        # Try to list blobs (compatible with older versions)
+        try:
+            blob_list = container_client.list_blobs()
+            blobs = list(blob_list)[:5]  # Get first 5 manually
+        except Exception as list_error:
+            # If listing fails, just try to get container properties
+            try:
+                container_client.get_container_properties()
+                blobs = []  # Container exists but can't list blobs
+            except Exception as prop_error:
+                raise Exception(f"Container access failed: {str(prop_error)}")
+        
+        return {
+            "status": "success",
+            "container": container_name,
+            "blob_count": len(blobs),
+            "connection_string_format": "valid"
+        }, HTTP_200_OK
+        
+    except Exception as e:
+        return {"error": f"Blob connection test failed: {str(e)}"}, 500
+
+
+@app.route('/test/search-init', methods=['GET'])
+def test_search_init():
+    """Test ImageSearchAPI initialization"""
+    try:
+        from ImageSearch import ImageSearchAPI
+        
+        # Try to initialize with real index name
+        api = ImageSearchAPI(indexName="product-pro-type-code-part", topK=5)
+        
+        return {
+            "status": "success",
+            "message": "ImageSearchAPI initialized successfully",
+            "index": "product-pro-type-code-part"
+        }, HTTP_200_OK
+        
+    except Exception as e:
+        return {"error": f"ImageSearchAPI initialization failed: {str(e)}"}, 500
+
+
 @app.route('/search', methods=['POST'])
 def search():
     try:
