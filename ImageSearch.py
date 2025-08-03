@@ -46,6 +46,7 @@ class ImageSearchAPI:
         # Azure AI Vision configurations
         self.aiVisionEndpoint = os.getenv("AZURE_AI_VISION_ENDPOINT")
         self.aiVisionApiKey = os.getenv("AZURE_AI_VISION_API_KEY")
+        self.aiVisionModelVersion = os.getenv("AZURE_AI_VISION_MODEL_VERSION", "2024-02-01")
 
         # Blob storage configurations
         self.blob_connection_string = os.getenv("BLOB_CONNECTION_STRING")
@@ -55,7 +56,7 @@ class ImageSearchAPI:
 
     def generate_embeddings(self, image_url):
         url = f"{self.aiVisionEndpoint}/computervision/retrieval:vectorizeImage"
-        params = {"api-version": "2023-02-01-preview"}
+        params = {"api-version": self.aiVisionModelVersion}
         headers = {"Content-Type": "application/json", "Ocp-Apim-Subscription-Key": self.aiVisionApiKey}
         data = {"url": image_url}
         response = requests.post(url, params=params, headers=headers, json=data)
