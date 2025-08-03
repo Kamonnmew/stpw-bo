@@ -4,10 +4,36 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from http_status_codes import HTTP_200_OK
 from ImageSearch import ImageSearchAPI
+import os
+
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not available in production
 
 app = Flask(__name__)
 CORS(app)
 executor = ThreadPoolExecutor()
+
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return {"status": "healthy", "message": "API is running"}, HTTP_200_OK
+
+
+@app.route('/debug/env', methods=['GET'])
+def debug_env():
+    import os
+    env_vars = {
+        "AZURE_SEARCH_SERVICE_ENDPOINT": os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "NOT_SET"),
+        "AZURE_SEARCH_ADMIN_KEY": "***" if os.getenv("AZURE_SEARCH_ADMIN_KEY") else "NOT_SET",
+        "BLOB_CONNECTION_STRING": "***" if os.getenv("BLOB_CONNECTION_STRING") else "NOT_SET",
+        "BLOB_CONTAINER_NAME": os.getenv("BLOB_CONTAINER_NAME", "NOT_SET"),
+        "AZURE_AI_VISION_ENDPOINT": os.getenv("AZURE_AI_VISION_ENDPOINT", "NOT_SET"),
+    }
+    return env_vars, HTTP_200_OK
 
 
 @app.route('/home', methods=['GET'])
