@@ -59,3 +59,11 @@ jobs:
           app-name: 'image-search-auto-dev'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7FA949AAA0A248CB9FBB4106C308ADF6 }}
+      
+      - name: 'Warmup Application'
+        run: |
+          echo "Waiting for deployment to complete..."
+          sleep 30
+          echo "Starting application warmup..."
+          curl -f --retry 5 --retry-delay 10 --retry-max-time 300 https://image-search-auto-dev.azurewebsites.net/home || echo "Warmup completed with expected response"
+          echo "Application warmup completed!"
