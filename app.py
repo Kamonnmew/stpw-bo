@@ -29,9 +29,10 @@ def debug_env():
     env_vars = {
         "AZURE_SEARCH_SERVICE_ENDPOINT": os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "NOT_SET"),
         "AZURE_SEARCH_ADMIN_KEY": "***" if os.getenv("AZURE_SEARCH_ADMIN_KEY") else "NOT_SET",
-        "BLOB_CONNECTION_STRING": "***" if os.getenv("BLOB_CONNECTION_STRING") else "NOT_SET",
+        "BLOB_CONNECTION_STRING": os.getenv("BLOB_CONNECTION_STRING", "NOT_SET")[:50] + "..." if os.getenv("BLOB_CONNECTION_STRING") else "NOT_SET",
         "BLOB_CONTAINER_NAME": os.getenv("BLOB_CONTAINER_NAME", "NOT_SET"),
         "AZURE_AI_VISION_ENDPOINT": os.getenv("AZURE_AI_VISION_ENDPOINT", "NOT_SET"),
+        "AZURE_AI_VISION_API_KEY": "***" if os.getenv("AZURE_AI_VISION_API_KEY") else "NOT_SET",
     }
     return env_vars, HTTP_200_OK
 

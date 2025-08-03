@@ -59,8 +59,19 @@ class ImageSearchAPI:
         # Blob storage configurations
         self.blob_connection_string = os.getenv("BLOB_CONNECTION_STRING")
         self.container_name = os.getenv("BLOB_CONTAINER_NAME")
-        blob_service_client = BlobServiceClient.from_connection_string(self.blob_connection_string)
-        self.container_client = blob_service_client.get_container_client(self.container_name)
+        
+        # Validate connection string
+        if not self.blob_connection_string:
+            raise ValueError("BLOB_CONNECTION_STRING environment variable is not set")
+        
+        if "AccountName=" not in self.blob_connection_string or "AccountKey=" not in self.blob_connection_string:
+            raise ValueError("Connection string missing required connection details.")
+            
+        try:
+            blob_service_client = BlobServiceClient.from_connection_string(self.blob_connection_string)
+            self.container_client = blob_service_client.get_container_client(self.container_name)
+        except Exception as e:
+            raise ValueError(f"Failed to create blob service client: {str(e)}")
 
     def generate_embeddings(self, image_url):
         # Remove trailing slash if exists
