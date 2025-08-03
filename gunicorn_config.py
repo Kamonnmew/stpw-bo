@@ -4,9 +4,11 @@ workers = int(os.environ.get('GUNICORN_PROCESSES', '2'))
 
 threads = int(os.environ.get('GUNICORN_THREADS', '4'))
 
-# timeout = int(os.environ.get('GUNICORN_TIMEOUT', '120'))
+timeout = int(os.environ.get('GUNICORN_TIMEOUT', '120'))
 
-bind = os.environ.get('GUNICORN_BIND', '0.0.0.0:8000')
+# Azure Web App uses PORT environment variable
+port = os.environ.get('PORT', '8000')
+bind = f"0.0.0.0:{port}"
 
 forwarded_allow_ips = '*'
 
