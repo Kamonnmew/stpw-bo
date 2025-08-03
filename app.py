@@ -36,6 +36,11 @@ def search():
                     future = executor.submit(image_search_api.search_image_file, file)
                     results = future.result()
 
+                # Check if results is None (failed to get embeddings or search)
+                if results is None:
+                    formatted_results_all.append({"error": f"Failed to process file {file.filename}: No results returned"})
+                    continue
+
                 # Format search results for each file
                 formatted_results = []
                 for result in results:

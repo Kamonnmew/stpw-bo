@@ -55,14 +55,35 @@ class ImageSearchAPI:
         self.container_client = blob_service_client.get_container_client(self.container_name)
 
     def generate_embeddings(self, image_url):
-        url = f"{self.aiVisionEndpoint}/computervision/retrieval:vectorizeImage"
-        params = {"api-version": self.aiVisionModelVersion}
+        # Remove trailing slash if exists
+        endpoint = self.aiVisionEndpoint.rstrip('/')
+        # Use the correct Azure AI Vision vectorize endpoint
+        url = f"{endpoint}/computervision/retrieval:vectorizeImage"
+        params = {
+            "api-version": self.aiVisionModelVersion,
+            "model-version": "2023-04-15"  # Use multilingual model
+        }
         headers = {"Content-Type": "application/json", "Ocp-Apim-Subscription-Key": self.aiVisionApiKey}
         data = {"url": image_url}
+        
+        print(f"Calling Azure AI Vision Vectorize API: {url}")
+        print(f"API Version: {self.aiVisionModelVersion}")
+        print(f"Model Version: 2023-04-15")
+        print(f"Image URL: {image_url}")
+        
         response = requests.post(url, params=params, headers=headers, json=data)
+        print(f"Response Status: {response.status_code}")
+        print(f"Response Body: {response.text}")
+        
         if response.status_code == 200:
-            embeddings = response.json()["vector"]
-            return embeddings
+            response_data = response.json()
+            if "vector" in response_data:
+                embeddings = response_data["vector"]
+                print(f"Successfully generated embeddings with {len(embeddings)} dimensions")
+                return embeddings
+            else:
+                print("Error: No 'vector' field in response")
+                return None
         else:
             print(f"Error: {response.status_code} - {response.text}")
             return None
