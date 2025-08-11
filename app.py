@@ -163,10 +163,14 @@ def search():
                         }
                         formatted_results.append(formatted_result)
                     elif indexName == "product-carmodel-type-code-used":
-                        # Change the pattern for other_index
-                        model_cars = str(result['title']).split(".")[0]
-                        product_type = str(result['title']).split(".")[1]
-                        product_code = str(result['title']).split(".")[2]
+                        # Change the pattern for other_index with error handling
+                        title_parts = str(result['title']).split(".")
+                        
+                        # Ensure we have at least 3 parts, otherwise use defaults
+                        model_cars = title_parts[0] if len(title_parts) > 0 else "Unknown"
+                        product_type = title_parts[1] if len(title_parts) > 1 else "Unknown"  
+                        product_code = title_parts[2] if len(title_parts) > 2 else "Unknown"
+                        
                         formatted_result = {
                             "modelName": indexName,
                             "originalFile": filename,
@@ -174,7 +178,8 @@ def search():
                             "productType": product_type,
                             "productCode": product_code,
                             "similarFile": result['imageUrl'],
-                            "similarity_percentage": result.get('similarity_percentage', 0)
+                            "similarity_percentage": result.get('similarity_percentage', 0),
+                            "title_format": f"Parts found: {len(title_parts)} (expected: 3)"
                         }
                         formatted_results.append(formatted_result)
 
@@ -185,9 +190,20 @@ def search():
                 return jsonify({"error": "Missing file or indexName parameter"}), 400
 
             except Exception as e:
-                # Handle other exceptions for individual files
-                error_message = "An error occurred while processing file {}: {}".format(file.filename, str(e))
-                formatted_results_all.append({"error": error_message})
+                # Handle other exceptions for individual files with detailed logging
+                import traceback
+                error_details = {
+                    "error": f"ML service error: An error occurred while processing file {file.filename}: {str(e)}",
+                    "file": file.filename,
+                    "index": indexName,
+                    "error_type": type(e).__name__,
+                    "traceback": traceback.format_exc()
+                }
+                
+                # Log the error for debugging
+                print(f"ERROR processing {file.filename}: {error_details}")
+                
+                formatted_results_all.append(error_details)
 
         return jsonify(formatted_results_all)
 
