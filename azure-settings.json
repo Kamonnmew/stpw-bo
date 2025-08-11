@@ -1,0 +1,18 @@
+[
+    {
+        "name": "WEBSITE_STARTUP_FILE", 
+        "value": "/home/site/wwwroot/startup.sh"
+    },
+    {
+        "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+        "value": "false"
+    },
+    {
+        "name": "ENABLE_ORYX_BUILD",
+        "value": "false"
+    },
+    {
+        "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE", 
+        "value": "true"
+    }
+]
