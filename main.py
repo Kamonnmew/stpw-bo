@@ -61,6 +61,14 @@ install_batch_packages()
 # Import app
 from app import app
 
+# Make sure app is available for WSGI (gunicorn/Azure)
+application = app
+
 if __name__ == "__main__":
+    # Only run development server if called directly
     port = int(os.environ.get("PORT", 8000))
+    print(f"Starting development server on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
+else:
+    # When imported by WSGI server
+    print("Application loaded for WSGI server")
