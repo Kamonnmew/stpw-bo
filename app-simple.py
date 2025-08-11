@@ -14,5 +14,8 @@ except ImportError as e:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "Flask-Cors==6.0.1"])
     from app import app
 
+# Export the app for gunicorn
+app = app
+
 if __name__ == "__main__":
     app.run()

@@ -1,7 +1,17 @@
 from concurrent.futures import ThreadPoolExecutor
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request
-from flask_cors import CORS
+
+# Try to import flask_cors, install if missing
+try:
+    from flask_cors import CORS
+except ImportError:
+    import subprocess
+    import sys
+    print("flask_cors not found, installing...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "Flask-Cors==6.0.1"])
+    from flask_cors import CORS
+
 from http_status_codes import HTTP_200_OK
 from ImageSearch import ImageSearchAPI
 import os
