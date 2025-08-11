@@ -163,18 +163,10 @@ def search():
                         }
                         formatted_results.append(formatted_result)
                     elif indexName == "product-carmodel-type-code-used":
-                        # Parse title with dot separator: modelCars.productType.productCode
-                        title_parts = str(result['title']).split(".")
-                        if len(title_parts) >= 3:
-                            model_cars = title_parts[0]
-                            product_type = title_parts[1]
-                            product_code = title_parts[2]
-                        else:
-                            # Fallback if format is unexpected
-                            model_cars = str(result['title'])
-                            product_type = ""
-                            product_code = ""
-                        
+                        # Change the pattern for other_index
+                        model_cars = str(result['title']).split(".")[0]
+                        product_type = str(result['title']).split(".")[1]
+                        product_code = str(result['title']).split(".")[2]
                         formatted_result = {
                             "modelName": indexName,
                             "originalFile": filename,
@@ -186,8 +178,7 @@ def search():
                         }
                         formatted_results.append(formatted_result)
 
-                # Extend instead of append to create flat array
-                formatted_results_all.extend(formatted_results)
+                formatted_results_all.append(formatted_results)
 
             except KeyError:
                 # Handle missing file or indexName
