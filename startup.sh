@@ -1,3 +1,1 @@
-#!/bin/bash
-pip install -r requirements.txt
-gunicorn --config gunicorn_config.py app:app
+gunicorn --bind=0.0.0.0 --timeout 600 app:app
