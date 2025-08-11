@@ -4,9 +4,11 @@ from dotenv import load_dotenv
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient, SearchIndexerClient
-from azure.search.documents.models import (
-    RawVectorQuery,
-)
+try:
+    from azure.search.documents.models import RawVectorQuery
+except ImportError:
+    # For older versions of azure-search-documents
+    from azure.search.documents import RawVectorQuery
 from azure.search.documents.indexes.models import (
 
     ExhaustiveKnnParameters,

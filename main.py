@@ -15,7 +15,7 @@ install_if_missing("flask_cors", "Flask-Cors==4.0.1")
 install_if_missing("requests", "requests==2.31.0")
 install_if_missing("azure.core", "azure-core==1.30.0")
 install_if_missing("azure.common", "azure-common==1.1.28")
-install_if_missing("azure.search.documents", "azure-search-documents==11.4.0")
+install_if_missing("azure.search.documents", "azure-search-documents==11.6.0")
 install_if_missing("azure.storage.blob", "azure-storage-blob==12.19.0")
 
 # เช็ค python-dotenv แบบพิเศษ (ตาม ImageSearch.py)
