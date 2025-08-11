@@ -52,6 +52,11 @@ jobs:
         with:
           name: python-app
       
+      - name: 'Wait before deployment (prevent SCM conflicts)'
+        run: |
+          echo "Waiting to avoid SCM container conflicts..."
+          sleep 45
+      
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
@@ -63,7 +68,8 @@ jobs:
       - name: 'Warmup Application'
         run: |
           echo "Waiting for deployment to complete..."
-          sleep 30
+          sleep 60
           echo "Starting application warmup..."
-          curl -f --retry 5 --retry-delay 10 --retry-max-time 300 https://image-search-auto-dev.azurewebsites.net/home || echo "Warmup completed with expected response"
+          curl -f --retry 10 --retry-delay 15 --retry-max-time 600 https://image-search-auto-dev.azurewebsites.net/health || echo "Health check pending..."
+          curl -f --retry 5 --retry-delay 10 --retry-max-time 300 https://image-search-auto-dev.azurewebsites.net/home || echo "Warmup completed"
           echo "Application warmup completed!"
