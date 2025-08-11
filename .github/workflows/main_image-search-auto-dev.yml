@@ -52,10 +52,13 @@ jobs:
         with:
           name: python-app
       
-      - name: 'Wait before deployment (prevent SCM conflicts)'
+      - name: 'Pre-deployment checks and wait'
         run: |
-          echo "Waiting to avoid SCM container conflicts..."
-          sleep 45
+          echo "Checking deployment readiness..."
+          # Check if the app is currently deploying or locked
+          curl -s -f --connect-timeout 30 https://image-search-auto-dev.azurewebsites.net/health || echo "App may be updating..."
+          echo "Waiting to avoid deployment conflicts and ensure clean deployment state..."
+          sleep 90
       
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -64,12 +67,38 @@ jobs:
           app-name: 'image-search-auto-dev'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7FA949AAA0A248CB9FBB4106C308ADF6 }}
+        continue-on-error: false
+        timeout-minutes: 15
       
-      - name: 'Warmup Application'
+      - name: 'Post-deployment wait and validation'
         run: |
-          echo "Waiting for deployment to complete..."
-          sleep 60
-          echo "Starting application warmup..."
-          curl -f --retry 10 --retry-delay 15 --retry-max-time 600 https://image-search-auto-dev.azurewebsites.net/health || echo "Health check pending..."
-          curl -f --retry 5 --retry-delay 10 --retry-max-time 300 https://image-search-auto-dev.azurewebsites.net/home || echo "Warmup completed"
-          echo "Application warmup completed!"
+          echo "Deployment completed. Waiting for container stabilization..."
+          sleep 120
+          echo "Starting comprehensive application validation..."
+          
+          # Health check with extended retry
+          for i in {1..15}; do
+            echo "Health check attempt $i/15..."
+            if curl -s -f --connect-timeout 30 --max-time 60 https://image-search-auto-dev.azurewebsites.net/health; then
+              echo "✓ Health check successful!"
+              break
+            fi
+            if [ $i -eq 15 ]; then
+              echo "❌ Health check failed after 15 attempts"
+              exit 1
+            fi
+            sleep 20
+          done
+          
+          # Warmup home endpoint
+          echo "Warming up main application..."
+          for i in {1..10}; do
+            echo "Warmup attempt $i/10..."
+            if curl -s -f --connect-timeout 30 --max-time 60 https://image-search-auto-dev.azurewebsites.net/home; then
+              echo "✓ Application warmup successful!"
+              break
+            fi
+            sleep 15
+          done
+          
+          echo "🎉 Deployment validation completed successfully!"
