@@ -95,12 +95,12 @@ def test_search_init():
         from ImageSearch import ImageSearchAPI
         
         # Try to initialize with real index name
-        api = ImageSearchAPI(indexName="product-pro-type-code-part", topK=5)
+        api = ImageSearchAPI(indexName="product-type-code-part", topK=5)
         
         return {
             "status": "success",
             "message": "ImageSearchAPI initialized successfully",
-            "index": "product-pro-type-code-part"
+            "index": "product-type-code-part"
         }, HTTP_200_OK
         
     except Exception as e:
