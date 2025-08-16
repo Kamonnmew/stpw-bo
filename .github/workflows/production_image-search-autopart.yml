@@ -62,10 +62,53 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_D4A067D8E7B94D5DB75B3A563D5598B8 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AA40BE994E8E4634BB8A15533715B59E }}
 
+      - name: 'Pre-deployment checks and wait'
+        run: |
+          echo "Checking production deployment readiness..."
+          # Check if the production app is currently deploying or locked
+          curl -s -f --connect-timeout 30 https://image-search-autopart.azurewebsites.net/health || echo "Production app may be updating..."
+          echo "Waiting to avoid deployment conflicts and ensure clean deployment state..."
+          sleep 90
+
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'image-search-autopart'
           slot-name: 'Production'
+        continue-on-error: false
+        timeout-minutes: 15
+      
+      - name: 'Post-deployment wait and validation'
+        run: |
+          echo "Production deployment completed. Waiting for container stabilization..."
+          sleep 120
+          echo "Starting comprehensive production application validation..."
+          
+          # Health check with extended retry
+          for i in {1..15}; do
+            echo "Production health check attempt $i/15..."
+            if curl -s -f --connect-timeout 30 --max-time 60 https://image-search-autopart.azurewebsites.net/health; then
+              echo "✓ Production health check successful!"
+              break
+            fi
+            if [ $i -eq 15 ]; then
+              echo "❌ Production health check failed after 15 attempts"
+              exit 1
+            fi
+            sleep 20
+          done
+          
+          # Warmup home endpoint
+          echo "Warming up production application..."
+          for i in {1..10}; do
+            echo "Production warmup attempt $i/10..."
+            if curl -s -f --connect-timeout 30 --max-time 60 https://image-search-autopart.azurewebsites.net/home; then
+              echo "✓ Production application warmup successful!"
+              break
+            fi
+            sleep 15
+          done
+          
+          echo "🎉 Production deployment validation completed successfully!"
           
