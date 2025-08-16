@@ -56,10 +56,9 @@ jobs:
           sleep 30
       
       - name: Deploy to Azure Web App - Production
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
         with:
           app-name: 'image-search-auto-prod'
-          slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_PROD }}
       
       - name: Post-deployment validation
