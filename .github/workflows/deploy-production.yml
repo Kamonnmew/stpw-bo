@@ -47,12 +47,8 @@ jobs:
       - name: Setup production environment variables
         run: |
           echo "Setting up production environment..."
-          if [ -f ".env prod" ]; then
-            cp ".env prod" .env
-            echo "Production environment file configured"
-          else
-            echo "Warning: .env prod file not found"
-          fi
+          echo "Production environment will be configured via Azure App Service settings"
+          echo "See .env.production.template for required variables"
       
       - name: Pre-deployment checks
         run: |
