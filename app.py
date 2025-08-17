@@ -70,6 +70,82 @@ def debug_storage_url():
         return {"error": f"Debug failed: {str(e)}"}, 500
 
 
+@app.route('/debug/search-direct', methods=['GET'])
+def debug_search_direct():
+    """Debug Azure Search Service directly"""
+    try:
+        from azure.search.documents import SearchClient
+        from azure.core.credentials import AzureKeyCredential
+        
+        # Get Azure Search configuration
+        endpoint = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT")
+        key = os.getenv("AZURE_SEARCH_ADMIN_KEY")
+        index_name = "product-type-code-part"
+        
+        # Create search client
+        search_client = SearchClient(endpoint, index_name, AzureKeyCredential(key))
+        
+        # Try to search for everything
+        results = search_client.search("*", top=5)
+        
+        # Convert results to list
+        result_list = []
+        for result in results:
+            result_dict = {}
+            for key, value in result.items():
+                if key.startswith('@'):
+                    continue  # Skip metadata
+                result_dict[key] = str(value)
+            result_list.append(result_dict)
+        
+        return {
+            "status": "success",
+            "endpoint": endpoint,
+            "index": index_name,
+            "result_count": len(result_list),
+            "results": result_list[:2]  # Show first 2 results
+        }, HTTP_200_OK
+        
+    except Exception as e:
+        import traceback
+        return {
+            "error": f"Direct search failed: {str(e)}",
+            "traceback": traceback.format_exc()
+        }, 500
+
+
+@app.route('/debug/ai-vision-test', methods=['GET'])
+def debug_ai_vision_test():
+    """Test Azure AI Vision with a sample image URL"""
+    try:
+        from ImageSearch import ImageSearchAPI
+        
+        # Use a simple public image for testing
+        sample_image_url = "https://via.placeholder.com/300x200.jpg"
+        
+        # Initialize ImageSearchAPI
+        api = ImageSearchAPI(indexName="product-type-code-part", topK=3)
+        
+        # Test embedding generation
+        embeddings = api.generate_embeddings(sample_image_url)
+        
+        return {
+            "status": "success",
+            "image_url": sample_image_url,
+            "embeddings_generated": embeddings is not None,
+            "embeddings_length": len(embeddings) if embeddings else 0,
+            "ai_vision_endpoint": os.getenv("AZURE_AI_VISION_ENDPOINT"),
+            "sample_embeddings": embeddings[:3] if embeddings else None
+        }, HTTP_200_OK
+        
+    except Exception as e:
+        import traceback
+        return {
+            "error": f"AI Vision test failed: {str(e)}",
+            "traceback": traceback.format_exc()
+        }, 500
+
+
 @app.route('/test/blob', methods=['GET'])
 def test_blob_connection():
     """Test blob connection without ImageSearchAPI"""
