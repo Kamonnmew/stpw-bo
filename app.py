@@ -42,6 +42,34 @@ def home():
     return "This is a SQL Search API", HTTP_200_OK
 
 
+@app.route('/debug/storage-url', methods=['GET'])
+def debug_storage_url():
+    """Debug storage URL generation"""
+    try:
+        connection_string = os.getenv("BLOB_CONNECTION_STRING", "")
+        container_name = os.getenv("BLOB_CONTAINER_NAME", "file-test-storage")
+        
+        # Extract storage account name from connection string
+        storage_account = "filestoragepath"  # default
+        if "AccountName=" in connection_string:
+            try:
+                storage_account = connection_string.split("AccountName=")[1].split(";")[0]
+            except:
+                pass
+        
+        sample_url = f'https://{storage_account}.blob.core.windows.net/{container_name}/sample.jpg'
+        
+        return {
+            "storage_account": storage_account,
+            "container_name": container_name,
+            "sample_url": sample_url,
+            "connection_string_has_account": "AccountName=" in connection_string
+        }, HTTP_200_OK
+        
+    except Exception as e:
+        return {"error": f"Debug failed: {str(e)}"}, 500
+
+
 @app.route('/test/blob', methods=['GET'])
 def test_blob_connection():
     """Test blob connection without ImageSearchAPI"""
@@ -107,6 +135,34 @@ def test_search_init():
         return {"error": f"ImageSearchAPI initialization failed: {str(e)}"}, 500
 
 
+@app.route('/debug/storage-url', methods=['GET'])
+def debug_storage_url():
+    """Debug endpoint to check storage URL generation"""
+    try:
+        connection_string = os.getenv("BLOB_CONNECTION_STRING", "")
+        container_name = os.getenv("BLOB_CONTAINER_NAME", "file-test-storage")
+        
+        # Extract storage account name from connection string
+        storage_account = "filestoragepath"  # default
+        if "AccountName=" in connection_string:
+            try:
+                storage_account = connection_string.split("AccountName=")[1].split(";")[0]
+            except:
+                pass
+        
+        sample_url = f'https://{storage_account}.blob.core.windows.net/{container_name}/sample-file.jpg'
+        
+        return {
+            "storage_account": storage_account,
+            "container_name": container_name,
+            "sample_url": sample_url,
+            "connection_string_present": bool(connection_string)
+        }, HTTP_200_OK
+        
+    except Exception as e:
+        return {"error": f"Storage URL debug failed: {str(e)}"}, 500
+
+
 @app.route('/search', methods=['POST'])
 def search():
     try:
@@ -121,9 +177,22 @@ def search():
         files = request.files.getlist('files')  # Get list of files
         image_search_api = ImageSearchAPI(indexName=indexName, topK=topK)
         formatted_results_all = []
+        
+        # Get storage account name from environment
+        connection_string = os.getenv("BLOB_CONNECTION_STRING", "")
+        container_name = os.getenv("BLOB_CONTAINER_NAME", "file-test-storage")
+        
+        # Extract storage account name from connection string
+        storage_account = "filestoragepath"  # default
+        if "AccountName=" in connection_string:
+            try:
+                storage_account = connection_string.split("AccountName=")[1].split(";")[0]
+            except:
+                pass
+        
         for file in files:
             try:
-                filename = 'https://filestoragepath.blob.core.windows.net/file-test-storage/' + str(
+                filename = f'https://{storage_account}.blob.core.windows.net/{container_name}/' + str(
                     secure_filename(file.filename))
                 with ThreadPoolExecutor() as executor:
                     future = executor.submit(image_search_api.search_image_file, file)
@@ -137,10 +206,16 @@ def search():
                 # Format search results for each file
                 formatted_results = []
                 for result in results:
-                    if indexName == "product-pro-type-code-part" or indexName == "product-pro-type-code-used" or \
-                            indexName == "product-pro-type-code-packaging":
-                        product_type = str(result['title']).split("-")[0]
-                        product_code = str(result['title']).split("-")[1]
+                    if indexName == "product-type-code-part" or indexName == "product-type-code-used" or \
+                            indexName == "product-type-code-packaging" or indexName == "product-pro-type-code-part" or \
+                            indexName == "product-pro-type-code-used" or indexName == "product-pro-type-code-packaging":
+                        # Handle both dev and production index naming patterns
+                        title_parts = str(result['title']).split("-")
+                        
+                        # Ensure we have at least 2 parts, otherwise use defaults
+                        product_type = title_parts[0] if len(title_parts) > 0 else "Unknown"
+                        product_code = title_parts[1] if len(title_parts) > 1 else "Unknown"
+                        
                         formatted_result = {
                             "modelName": indexName,
                             "originalFile": filename,
@@ -152,8 +227,10 @@ def search():
                         }
                         formatted_results.append(formatted_result)
                     elif indexName == "product-carmodelclean":
-                        # Change the pattern for other_index
-                        model_cars = str(result['title']).split("-")[0]
+                        # Handle car model clean index
+                        title_parts = str(result['title']).split("-")
+                        model_cars = title_parts[0] if len(title_parts) > 0 else "Unknown"
+                        
                         formatted_result = {
                             "modelName": indexName,
                             "originalFile": filename,
@@ -163,7 +240,7 @@ def search():
                         }
                         formatted_results.append(formatted_result)
                     elif indexName == "product-carmodel-type-code-used":
-                        # Change the pattern for other_index with error handling
+                        # Handle car model type code used index with dot separator
                         title_parts = str(result['title']).split(".")
                         
                         # Ensure we have at least 3 parts, otherwise use defaults
@@ -178,8 +255,19 @@ def search():
                             "productType": product_type,
                             "productCode": product_code,
                             "similarFile": result['imageUrl'],
+                            "similarity_percentage": result.get('similarity_percentage', 0)
+                        }
+                        formatted_results.append(formatted_result)
+                    else:
+                        # Default handler for unknown index patterns
+                        formatted_result = {
+                            "modelName": indexName,
+                            "originalFile": filename,
+                            "title": str(result.get('title', 'Unknown')),
+                            "similarFile": result['imageUrl'],
                             "similarity_percentage": result.get('similarity_percentage', 0),
-                            "title_format": f"Parts found: {len(title_parts)} (expected: 3)"
+                            "confidence_score": result.get('confidence_score', 0),
+                            "note": "Using default format - unknown index pattern"
                         }
                         formatted_results.append(formatted_result)
 
