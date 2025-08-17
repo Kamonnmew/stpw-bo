@@ -135,34 +135,6 @@ def test_search_init():
         return {"error": f"ImageSearchAPI initialization failed: {str(e)}"}, 500
 
 
-@app.route('/debug/storage-url', methods=['GET'])
-def debug_storage_url():
-    """Debug endpoint to check storage URL generation"""
-    try:
-        connection_string = os.getenv("BLOB_CONNECTION_STRING", "")
-        container_name = os.getenv("BLOB_CONTAINER_NAME", "file-test-storage")
-        
-        # Extract storage account name from connection string
-        storage_account = "filestoragepath"  # default
-        if "AccountName=" in connection_string:
-            try:
-                storage_account = connection_string.split("AccountName=")[1].split(";")[0]
-            except:
-                pass
-        
-        sample_url = f'https://{storage_account}.blob.core.windows.net/{container_name}/sample-file.jpg'
-        
-        return {
-            "storage_account": storage_account,
-            "container_name": container_name,
-            "sample_url": sample_url,
-            "connection_string_present": bool(connection_string)
-        }, HTTP_200_OK
-        
-    except Exception as e:
-        return {"error": f"Storage URL debug failed: {str(e)}"}, 500
-
-
 @app.route('/search', methods=['POST'])
 def search():
     try:
