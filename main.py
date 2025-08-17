@@ -42,7 +42,7 @@ def install_batch_packages():
     packages_to_install = []
     required_packages = [
         ("flask", "Flask==3.1.1"),
-        ("flask_cors", "Flask-Cors==4.0.1"), 
+        ("flask_cors", "Flask-Cors==6.0.1"), 
         ("requests", "requests==2.32.4"),
         ("azure.core", "azure-core==1.35.0"),
         ("azure.common", "azure-common==1.1.28"),
