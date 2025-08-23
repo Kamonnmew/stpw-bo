@@ -1,0 +1,70 @@
+{
+  "name": "simplified-automotive-indexer",
+  "description": "Simplified indexer for automotive parts with visual analysis only",
+  "dataSourceName": "product-type-code-part-datasource",
+  "targetIndexName": "simplified-automotive-parts-index",
+  "skillsetName": "simplified-automotive-parts-skillset",
+  "schedule": {
+    "interval": "PT30M",
+    "startTime": "2024-01-01T00:00:00Z"
+  },
+  "parameters": {
+    "batchSize": 10,
+    "maxFailedItems": 5,
+    "maxFailedItemsPerBatch": 2,
+    "configuration": {
+      "imageAction": "generateNormalizedImages",
+      "normalizedImageMaxWidth": 2000,
+      "normalizedImageMaxHeight": 2000,
+      "allowSkillsetToReadFileData": true,
+      "dataToExtract": "contentAndMetadata"
+    }
+  },
+  "fieldMappings": [
+    {
+      "sourceFieldName": "metadata_storage_name",
+      "targetFieldName": "id",
+      "mappingFunction": {
+        "name": "base64Encode"
+      }
+    },
+    {
+      "sourceFieldName": "metadata_storage_path",
+      "targetFieldName": "imageUrl"
+    },
+    {
+      "sourceFieldName": "metadata_storage_name",
+      "targetFieldName": "title"
+    }
+  ],
+  "outputFieldMappings": [
+    {
+      "sourceFieldName": "/document/imageVector",
+      "targetFieldName": "imageVector"
+    },
+    {
+      "sourceFieldName": "/document/detectedObjects/*/object",
+      "targetFieldName": "detectedObjects"
+    },
+    {
+      "sourceFieldName": "/document/visualTags/*/name",
+      "targetFieldName": "visualTags"
+    },
+    {
+      "sourceFieldName": "/document/imageDescription/text",
+      "targetFieldName": "imageDescription"
+    },
+    {
+      "sourceFieldName": "/document/primaryColor",
+      "targetFieldName": "primaryColor"
+    },
+    {
+      "sourceFieldName": "/document/secondaryColor",
+      "targetFieldName": "secondaryColor"
+    },
+    {
+      "sourceFieldName": "/document/colorTags",
+      "targetFieldName": "colorTags"
+    }
+  ]
+}

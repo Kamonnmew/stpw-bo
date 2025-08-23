@@ -1,0 +1,110 @@
+{
+  "name": "simplified-automotive-parts-skillset",
+  "description": "Simplified skillset focusing on image analysis only",
+  "skills": [
+    {
+      "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+      "name": "ImageEmbeddingSkill",
+      "description": "Generate image embeddings using Azure AI Vision",
+      "context": "/document",
+      "uri": "https://embedded-function.azurewebsites.net/api/getimageembeddings?code=TjSkMWJ8kNjRnPEHD8dim_SGDprgfIHXofF7heZPcXQzAzFuWLgwAg==",
+      "httpMethod": "POST",
+      "timeout": "PT230S",
+      "batchSize": 1,
+      "degreeOfParallelism": 1,
+      "inputs": [
+        {
+          "name": "imageUrl",
+          "source": "/document/metadata_storage_path"
+        },
+        {
+          "name": "recordId",
+          "source": "/document/metadata_storage_name"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vector",
+          "targetName": "imageVector"
+        }
+      ],
+      "httpHeaders": {}
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Vision.ImageAnalysisSkill",
+      "name": "ImageAnalysisSkill",
+      "description": "Analyze automotive part images for objects and features",
+      "context": "/document/normalized_images/*",
+      "visualFeatures": [
+        "objects",
+        "tags", 
+        "description",
+        "categories",
+        "color"
+      ],
+      "inputs": [
+        {
+          "name": "image",
+          "source": "/document/normalized_images/*"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "objects",
+          "targetName": "detectedObjects"
+        },
+        {
+          "name": "tags",
+          "targetName": "visualTags"
+        },
+        {
+          "name": "description",
+          "targetName": "imageDescription"
+        },
+        {
+          "name": "color",
+          "targetName": "colorInfo"
+        }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Util.ShaperSkill",
+      "name": "ColorExtractorSkill",
+      "description": "Extract dominant colors from Computer Vision analysis",
+      "context": "/document",
+      "inputs": [
+        {
+          "name": "dominantColorForeground",
+          "source": "/document/colorInfo/dominantColorForeground"
+        },
+        {
+          "name": "dominantColorBackground", 
+          "source": "/document/colorInfo/dominantColorBackground"
+        },
+        {
+          "name": "dominantColors",
+          "source": "/document/colorInfo/dominantColors"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "primaryColor",
+          "targetName": "primaryColor"
+        },
+        {
+          "name": "secondaryColor", 
+          "targetName": "secondaryColor"
+        },
+        {
+          "name": "colorTags",
+          "targetName": "colorTags"
+        }
+      ]
+    }
+  ],
+  "cognitiveServices": {
+    "@odata.type": "#Microsoft.Azure.Search.CognitiveServicesByKey",
+    "description": "Cognitive Services for OCR and Image Analysis",
+    "key": "YOUR_COGNITIVE_SERVICES_KEY"
+  }
+}
